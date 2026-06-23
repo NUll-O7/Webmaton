@@ -1,0 +1,33 @@
+{
+  "name": "website-automation-agent",
+  "version": "1.0.0",
+  "description": "Assignment 04 - Website Automation Agent using Playwright and local Ollama LLM",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts",
+    "postinstall": "playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "automation",
+    "ollama",
+    "agent"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "playwright": "^1.50.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}

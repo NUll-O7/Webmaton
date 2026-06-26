@@ -7,6 +7,7 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "dev": "tsx src/main.ts",
+    "capture:assets": "tsx scripts/capture-readme-assets.ts",
     "postinstall": "playwright install chromium"
   },
   "keywords": [

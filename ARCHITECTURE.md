@@ -106,6 +106,34 @@ On failure, captures an error screenshot before cleanup.
 - Replace browser automation logic
 - Call external cloud APIs
 
+## Chain-of-Thought (CoT) Prompting
+
+Controlled by `COT_ENABLED` (default `true`). When enabled, every LLM call becomes a two-phase interaction:
+
+```
+Phase 1 — Think
+  System: "Reason step-by-step. Do NOT produce JSON yet."
+  User:   <original task / DOM context>
+  ──▶ free-text thought (logged at debug level)
+
+Phase 2 — Answer
+  System: "Based on your reasoning, return ONLY valid JSON."
+  User:   "Your reasoning:\n<thought>\n\nNow return the JSON."
+  ──▶ structured JSON (parsed as usual)
+```
+
+This applies to both `planSteps()` and `suggestSelector()`. The thought text is:
+- Logged at `debug` level for inspection
+- Attached to each `LlmPlanStep` and `LlmSelectorSuggestion` as an optional `thoughtTrace` field
+- Aggregated in `AgentRunResult.thoughtTraces` for post-run analysis
+
+When `COT_ENABLED=false`, the original single-shot prompts run unchanged (fully backward-compatible).
+
+| Config Flag | Env Var | Default | Effect |
+|-------------|---------|---------|--------|
+| `llmEnabled` | `LLM_ENABLED` | `true` | Enables all LLM features |
+| `cotEnabled` | `COT_ENABLED` | `true` | Enables two-phase CoT prompting |
+
 ## Error Handling
 
 | Scenario | Behavior |

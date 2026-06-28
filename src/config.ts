@@ -33,6 +33,8 @@ export const config = {
   ollamaBaseUrl: process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434',
   llmModel: process.env.LLM_MODEL ?? 'llama3.2',
   llmEnabled: parseBool(process.env.LLM_ENABLED, true),
+  /** When true, every LLM call uses a two-phase Chain-of-Thought prompt (think → answer). */
+  cotEnabled: parseBool(process.env.COT_ENABLED, true),
 } as const;
 
 export type AppConfig = typeof config;

@@ -16,7 +16,7 @@ import {
 } from '../tools/browserTools';
 import { sendKeys } from '../tools/interactionTools';
 import { logger } from '../utils/logger';
-import type { AgentRunResult, BrowserSession } from '../types';
+import type { AgentRunResult, BrowserSession, LlmThoughtTrace } from '../types';
 
 export class WebsiteAutomationAgent {
   private session: BrowserSession | null = null;
@@ -25,12 +25,25 @@ export class WebsiteAutomationAgent {
     const startTime = Date.now();
     const stepsCompleted: string[] = [];
     const errors: string[] = [];
+    const thoughtTraces: LlmThoughtTrace[] = [];
     let nameFilled = false;
     let descriptionFilled = false;
     let screenshotPath: string | undefined;
 
     logger.info('=== Website Automation Agent started ===');
-    logger.info({ config: { ...config, targetUrl: config.targetUrl } }, 'Configuration loaded');
+    logger.info(
+      {
+        config: { ...config, targetUrl: config.targetUrl },
+        cotEnabled: config.cotEnabled,
+      },
+      'Configuration loaded',
+    );
+
+    if (config.cotEnabled) {
+      logger.info('[CoT] Chain-of-Thought prompting is ENABLED — LLM calls will use think→answer phases');
+    } else {
+      logger.info('[CoT] Chain-of-Thought prompting is DISABLED — using single-shot LLM prompts');
+    }
 
     try {
       if (config.llmEnabled) {
@@ -43,6 +56,16 @@ export class WebsiteAutomationAgent {
             );
             logger.info({ plan }, 'High-level plan from LLM');
             stepsCompleted.push('llm_plan_generated');
+
+            // Collect thought traces from the plan steps (each step carries the same trace)
+            if (config.cotEnabled && plan.length > 0 && plan[0].thoughtTrace) {
+              const planTrace = plan[0].thoughtTrace;
+              thoughtTraces.push(planTrace);
+              logger.debug(
+                { thoughtLength: planTrace.thought.length },
+                '[CoT] Plan thought trace collected',
+              );
+            }
           } catch (planError) {
             logger.warn({ error: planError }, 'LLM planning failed — continuing without plan');
             errors.push(`LLM planning: ${(planError as Error).message}`);
@@ -125,6 +148,13 @@ export class WebsiteAutomationAgent {
     const durationMs = Date.now() - startTime;
     const success = nameFilled && descriptionFilled && errors.length === 0;
 
+    if (config.cotEnabled && thoughtTraces.length > 0) {
+      logger.info(
+        { traceCount: thoughtTraces.length },
+        '[CoT] Thought traces collected during run',
+      );
+    }
+
     const result: AgentRunResult = {
       success,
       screenshotPath: screenshotPath ? path.relative(process.cwd(), screenshotPath) : undefined,
@@ -133,6 +163,7 @@ export class WebsiteAutomationAgent {
       stepsCompleted,
       errors,
       durationMs,
+      thoughtTraces,
     };
 
     logger.info({ result }, 'Run summary');
